@@ -1,10 +1,8 @@
 package com.hatsukaze.overreaction;
 
-import com.hatsukaze.overreaction.network.RequestAttackPacket;
 import com.hatsukaze.overreaction.manager.ClientHitStopManager;
-
+import com.hatsukaze.overreaction.network.RequestAttackPacket;
 import com.zigythebird.playeranim.animation.PlayerAnimationController;
-import com.zigythebird.playeranim.api.PlayerAnimationAccess;
 import com.zigythebird.playeranim.api.PlayerAnimationFactory;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonConfiguration;
 import com.zigythebird.playeranimcore.api.firstPerson.FirstPersonMode;
@@ -36,6 +34,7 @@ public class ExampleModClient {
         // Do not forget to add translations for your config options to the en_us.json file.
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
     }
+
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
         // Some client setup code
@@ -85,18 +84,8 @@ public class ExampleModClient {
 
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null) return;
-
-        PlayerAnimationController controller = (PlayerAnimationController)
-                PlayerAnimationAccess.getPlayerAnimationLayer(
-                        mc.player, ATTACK_LAYER_ID
-                );
-        if (controller == null) return;
-
-        ClientHitStopManager.tick(controller);
+        ClientHitStopManager.tick();
     }
-
 
 
     //レイヤーを登録

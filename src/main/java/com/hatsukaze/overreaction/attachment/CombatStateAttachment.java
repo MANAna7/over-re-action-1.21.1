@@ -10,8 +10,9 @@ import java.util.Set;
 import java.util.UUID;
 
 //NBT(セーブ&ロードできるよ～ってimplementsで宣言、インターフェースを宣言して実装してるよ～ってする)
+
 /**
- *現在の攻撃の状態(state)を管理する。今回の攻撃でもう誰にヒットしたか?いまどこか？今何のコンボか？Timerは？みたいなものを管理する。これを作ることによってクライアントサイドと紐づけ、動作する
+ * 現在の攻撃の状態(state)を管理する。今回の攻撃でもう誰にヒットしたか?いまどこか？今何のコンボか？Timerは？みたいなものを管理する。これを作ることによってクライアントサイドと紐づけ、動作する
  *
  **/
 public class CombatStateAttachment implements INBTSerializable<CompoundTag> {
@@ -41,43 +42,108 @@ public class CombatStateAttachment implements INBTSerializable<CompoundTag> {
     private boolean bufferedInput = false;
     private float comboWindowTimer = -1f; // -1 = ウィンドウ非アクティブ
 
+    // ヒットストップ系　1攻撃につき1回飲み発動させるための変数共
+    private boolean hitStopUsed = false;
+    private float hitStopTimer = 0f;
 
 
-    public boolean hasBufferedInput() { return bufferedInput; }
-    public void setBufferedInput(boolean b) { this.bufferedInput = b; }
-    public float getComboWindowTimer() { return comboWindowTimer; }
-    public void setComboWindowTimer(float t) { this.comboWindowTimer = t; }
+    public boolean hasBufferedInput() {
+        return bufferedInput;
+    }
+
+    public void setBufferedInput(boolean b) {
+        this.bufferedInput = b;
+    }
+
+    public float getComboWindowTimer() {
+        return comboWindowTimer;
+    }
+
+    public void setComboWindowTimer(float t) {
+        this.comboWindowTimer = t;
+    }
 
     // --- phase ---
-    public CombatPhase getPhase() { return phase; }
-    public void setPhase(CombatPhase phase) { this.phase = phase;}
+    public CombatPhase getPhase() {
+        return phase;
+    }
+
+    public void setPhase(CombatPhase phase) {
+        this.phase = phase;
+    }
 
     // --- currentNodeId ---
-    public String getCurrentNodeId() { return currentNodeId; }
-    public void setCurrentNodeId(String nodeId) { this.currentNodeId = nodeId; }
+    public String getCurrentNodeId() {
+        return currentNodeId;
+    }
+
+    public void setCurrentNodeId(String nodeId) {
+        this.currentNodeId = nodeId;
+    }
 
     // --- hitFlg ---
-    public boolean hasAnimationPlayed() { return animationPlayed; }
-    public void setAnimationPlayed(boolean played) { this.animationPlayed = played; }
+    public boolean hasAnimationPlayed() {
+        return animationPlayed;
+    }
+
+    public void setAnimationPlayed(boolean played) {
+        this.animationPlayed = played;
+    }
 
     // --- attackTimer ---
-    public float getAttackTimer() { return attackTimer; }
-    public void setAttackTimer(float timer) { this.attackTimer = timer; }
+    public float getAttackTimer() {
+        return attackTimer;
+    }
+
+    public void setAttackTimer(float timer) {
+        this.attackTimer = timer;
+    }
 
     // --- currentAttackDef ---
-    public AttackDefinition getCurrentAttackDef() { return currentAttackDef; }
+    public AttackDefinition getCurrentAttackDef() {
+        return currentAttackDef;
+    }
+
     public void setCurrentAttackDef(AttackDefinition def) {
         this.currentAttackDef = def;
         this.hitEntities.clear(); // 攻撃切り替わったらヒット済みリセット
+        this.hitStopUsed = false; // ヒットストップを発動可能に戻す
     }
 
     // --- hitEntities ---
-    public boolean hasHit(UUID uuid) { return hitEntities.contains(uuid); }
-    public void addHitEntity(UUID uuid) { hitEntities.add(uuid); }
+    public boolean hasHit(UUID uuid) {
+        return hitEntities.contains(uuid);
+    }
+
+    public void addHitEntity(UUID uuid) {
+        hitEntities.add(uuid);
+    }
 
     // --- AttackingTimes ---
-    public float getTotalAttackingTime() { return totalAttackingTime; }
-    public void setTotalAttackingTime(float t) { this.totalAttackingTime = t; }
+    public float getTotalAttackingTime() {
+        return totalAttackingTime;
+    }
+
+    public void setTotalAttackingTime(float t) {
+        this.totalAttackingTime = t;
+    }
+
+    // --- AttackingTimes ---
+    public boolean isHitStopUsed() {
+        return hitStopUsed;
+    }
+
+    public void setHitStopUsed(boolean b) {
+        this.hitStopUsed = b;
+    }
+
+    public float getHitStopTimer() {
+        return hitStopTimer;
+    }
+
+    public void setHitStopTimer(float t) {
+        this.hitStopTimer = t;
+    }
 
     // --- シリアライズ（ログアウト時の保存用） ---
     public CompoundTag save() {
@@ -90,7 +156,7 @@ public class CombatStateAttachment implements INBTSerializable<CompoundTag> {
     public void load(CompoundTag tag) {
         String nodeId = tag.getString("currentNodeId");
         this.currentNodeId = nodeId.isEmpty() ? null : nodeId;
-        this.attackTimer    = tag.getFloat("attackTimer");
+        this.attackTimer = tag.getFloat("attackTimer");
         // currentAttackDefはランタイムのみ、保存不要
     }
 

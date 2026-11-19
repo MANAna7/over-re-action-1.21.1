@@ -2,22 +2,13 @@ package com.hatsukaze.overreaction;
 
 import com.hatsukaze.overreaction.combat.CombatProcessor;
 import com.hatsukaze.overreaction.data.ComboReloadListener;
-import com.hatsukaze.overreaction.network.AnimationPacketHandler;
-import com.hatsukaze.overreaction.network.HitStopPacket;
-import com.hatsukaze.overreaction.network.PlayAnimationPacket;
-import com.hatsukaze.overreaction.network.RequestAttackPacket;
+import com.hatsukaze.overreaction.network.*;
 import com.hatsukaze.overreaction.registry.ModAttachments;
-import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.event.AddReloadListenerEvent;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import org.slf4j.Logger;
-
 import com.mojang.logging.LogUtils;
-
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
@@ -29,17 +20,21 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import org.slf4j.Logger;
 
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(ExampleMod.MODID)
@@ -118,6 +113,12 @@ public class ExampleMod {
                 HitStopPacket.TYPE,
                 HitStopPacket.STREAM_CODEC,
                 AnimationPacketHandler::handleHitStop
+        );
+
+        registrar.playToClient(
+                ReleasePosePacket.TYPE,
+                ReleasePosePacket.STREAM_CODEC,
+                AnimationPacketHandler::handleReleasePose
         );
 
         //サーバーにパケットが送信される（パケット送信メソッドが動いたとき）に発火。自動？unityのサブスクライブみたいなものなのかな

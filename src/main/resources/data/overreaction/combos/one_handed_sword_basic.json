@@ -3,48 +3,61 @@
   "nodes": [
     {
       "id": "slash_1",
-      "animationId": "sword_slash_1",
-      "animationNaturalTime": 0.54,
-      "attackingTimeBase": 8.0,
-      "hitWindow": { "start": 0.2, "end": 0.7 },
+      "animationId": "sword_slash_2",
+      "animationNaturalTime": 0.42,
+      "attackingTimeBase": 1.0,
+      "hitWindow": {
+        "start": 0.2,
+        "end": 0.7
+      },
       "damageMultiplier": 1.0,
       "playOnHit": false,
       "hitStop": {
-        "duration": 0.1
+        "duration": 0.5
       },
       "recovery": {
         "animationId": "sword_recovery_1",
-        "duration": 2.4,
+        "duration": 0.4,
         "cancelable": true
       },
+      "releaseTime": 0.21,
+      "blendInTime": 0.21,
       "leftClickNext": "slash_2",
       "rightClickNext": "guard"
     },
     {
       "id": "slash_2",
       "animationId": "sword_slash_2",
-      "animationNaturalTime": 0.54,
+      "animationNaturalTime": 0.42,
       "attackingTimeBase": 1.0,
-      "hitWindow": { "start": 0.2, "end": 0.7 },
+      "hitWindow": {
+        "start": 0.2,
+        "end": 0.7
+      },
       "damageMultiplier": 1.0,
       "playOnHit": false,
       "hitStop": {
-        "duration": 0.08
+        "duration": 0.4
       },
       "recovery": {
         "animationId": "sword_recovery_2",
         "duration": 0.4,
         "cancelable": true
       },
+      "releaseTime": 0.21,
+      "blendInTime": 0.21,
       "leftClickNext": "slash_3",
       "rightClickNext": "guard"
     },
     {
       "id": "slash_3",
       "animationId": "sword_slash_3",
-      "animationNaturalTime": 0.54,
+      "animationNaturalTime": 0.42,
       "attackingTimeBase": 1.0,
-      "hitWindow": { "start": 0.3, "end": 0.7 },
+      "hitWindow": {
+        "start": 0.3,
+        "end": 0.7
+      },
       "damageMultiplier": 1.2,
       "playOnHit": false,
       "hitStop": {
@@ -55,6 +68,8 @@
         "duration": 2.4,
         "cancelable": false
       },
+      "releaseTime": 0.21,
+      "blendInTime": 0.21,
       "leftClickNext": "slash_1",
       "rightClickNext": "special_after_3"
     },
@@ -70,6 +85,8 @@
         "duration": 0.3,
         "cancelable": true
       },
+      "releaseTime": 0.21,
+      "blendInTime": 0.21,
       "leftClickNext": "slash_1",
       "rightClickNext": null
     },
@@ -77,7 +94,10 @@
       "id": "special_after_3",
       "animationId": "sword_special",
       "attackingTimeBase": 1.0,
-      "hitWindow": { "start": 0.4, "end": 0.8 },
+      "hitWindow": {
+        "start": 0.4,
+        "end": 0.8
+      },
       "damageMultiplier": 1.8,
       "playOnHit": true,
       "hitStop": {
@@ -94,20 +114,34 @@
         "chargingAnimationId": "sword_charge_loop",
         "releaseAnimationId": "sword_charge_release",
         "chargeStages": [
-          { "duration": 0.5, "damageMultiplier": 1.1, "animationId": "charge_stage1" },
-          { "duration": 1.5, "damageMultiplier": 1.5, "animationId": "charge_stage2" }
+          {
+            "duration": 0.5,
+            "damageMultiplier": 1.1,
+            "animationId": "charge_stage1"
+          },
+          {
+            "duration": 1.5,
+            "damageMultiplier": 1.5,
+            "animationId": "charge_stage2"
+          }
         ]
       }
     }
   ],
   "aerialAttack": {
     "animationId": "sword_aerial",
-    "hitWindow": { "start": 0.2, "end": 0.5 },
+    "hitWindow": {
+      "start": 0.2,
+      "end": 0.5
+    },
     "damageMultiplier": 1.1,
     "hitStop": {
       "duration": 0.08
     },
-    "conditions": ["combo_none", "after_combo_slash_3"],
+    "conditions": [
+      "combo_none",
+      "after_combo_slash_3"
+    ],
     "landingComboEntry": null,
     "landingComboEntryOnHit": null
   }

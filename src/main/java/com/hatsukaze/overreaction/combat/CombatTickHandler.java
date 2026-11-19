@@ -4,9 +4,8 @@ import com.hatsukaze.overreaction.attachment.CombatStateAttachment;
 import com.hatsukaze.overreaction.data.AttackDefinition;
 import com.hatsukaze.overreaction.network.HitStopPacket;
 import com.hatsukaze.overreaction.network.PlayAnimationPacket;
+import com.hatsukaze.overreaction.network.ReleasePosePacket;
 import com.hatsukaze.overreaction.registry.ModAttachments;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -40,22 +39,31 @@ public class CombatTickHandler {
         AttackDefinition currentAttack = state.getCurrentAttackDef();
         if (currentAttack == null) return;
 
-        float timer = state.getAttackTimer() + 0.05f;
-        state.setAttackTimer(timer);
+        // ヒットストップ中は時間を止める
+        // ヒットストップ以外では時間を進ませるタイマーとして使用する
+        float timer = state.getAttackTimer();
+        if (phase != CombatStateAttachment.CombatPhase.HIT_STOP) {
+            timer += 0.05f;
+            state.setAttackTimer(timer);
+        }
 
         switch (phase) {
             case ATTACKING -> {
                 //割合で攻撃コライダーを生成するタイミングを変える。
                 float total = state.getTotalAttackingTime();
                 float hwStart = total * currentAttack.hitWindowStart;
-                float hwEnd   = total * currentAttack.hitWindowEnd;
+                float hwEnd = total * currentAttack.hitWindowEnd;
 
                 //ヒット判定のウィンドウを開始
                 if (timer >= hwStart && timer <= hwEnd) {
                     List<Entity> targets = performHitDetection(player, currentAttack, state);
-                    if (!targets.isEmpty() && currentAttack.hitStop != null) {
+                    // ヒットストップは1攻撃につき1度だけ再生する
+                    if (!targets.isEmpty() && currentAttack.hitStop != null && !state.isHitStopUsed()) {
                         state.setPhase(CombatStateAttachment.CombatPhase.HIT_STOP);
-                        state.setAttackTimer(0f);
+                        // ヒットストップ消費
+                        state.setHitStopUsed(true);
+                        state.setHitStopTimer(0f);
+                        // attackTimerは0に戻さない　ヒットストップ明けに再生することでアニメーション全体をキープする
                         HitStopPacket packet = new HitStopPacket(
                                 player.getId(),
                                 currentAttack.hitStop.duration
@@ -71,22 +79,18 @@ public class CombatTickHandler {
                         state.setPhase(CombatStateAttachment.CombatPhase.RECOVERY);
                         state.setAttackTimer(0f);
                     } else {
-                        resetToIdle(state);
+                        resetToIdle(player, state);
                     }
                 }
             }
-
             case HIT_STOP -> {
-                if (currentAttack.hitStop == null || timer > currentAttack.hitStop.duration) {
-                    if (currentAttack.recovery != null) {
-                        state.setPhase(CombatStateAttachment.CombatPhase.RECOVERY);
-                        state.setAttackTimer(0f);
-                    } else {
-                        resetToIdle(state);
-                    }
+                float stopTimer = state.getHitStopTimer() + 0.05f;
+                state.setHitStopTimer(stopTimer);
+                // hitstopが終わり次第フェーズのみ攻撃に戻す　animationは継続して再生
+                if (currentAttack.hitStop == null || stopTimer > currentAttack.hitStop.duration) {
+                    state.setPhase(CombatStateAttachment.CombatPhase.ATTACKING);
                 }
             }
-
             case RECOVERY -> {
                 if (currentAttack.recovery == null) {
                     startComboWindow(state);
@@ -113,19 +117,28 @@ public class CombatTickHandler {
                 }
                 // 0.3秒でタイムアウト、入力受付時間をここで設定している
                 if (windowTimer > 0.5f) {
-                    resetToIdle(state);
+                    resetToIdle(player, state);
                 }
             }
         }
     }
 
-    private static void resetToIdle(CombatStateAttachment state) {
+
+    private static void resetToIdle(ServerPlayer player, CombatStateAttachment state) {
+        // currentAttackDefを消す前に、終わった攻撃の戻りフェードを読んでおく
+        AttackDefinition ended = state.getCurrentAttackDef();
+        int releaseTicks = (ended != null) ? ended.releaseTime : AttackDefinition.DEFAULT_RELEASE_TICKS;
+
         state.setPhase(CombatStateAttachment.CombatPhase.IDLE);
         state.setCurrentAttackDef(null);
         state.setCurrentNodeId(null);
         state.setAttackTimer(0f);
         state.setComboWindowTimer(-1f);
         state.setBufferedInput(false);
+
+        // さっきとったreleaseTickを使ってリリースポーズを発火
+        PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, new ReleasePosePacket(player.getId(), releaseTicks)
+        );
     }
 
     private static void startComboWindow(CombatStateAttachment state) {
@@ -178,7 +191,8 @@ public class CombatTickHandler {
                     player.getId(),
                     attackDef.animationId,
                     state.getTotalAttackingTime(),
-                    attackDef.animationNaturalTime
+                    attackDef.animationNaturalTime,
+                    attackDef.blendInTime
 
             );
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, packet);

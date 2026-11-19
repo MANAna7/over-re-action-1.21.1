@@ -1,21 +1,14 @@
 package com.hatsukaze.overreaction.network;
 
-import com.hatsukaze.overreaction.ExampleMod;
-import com.hatsukaze.overreaction.ExampleModClient;
 import com.hatsukaze.overreaction.manager.ClientHitStopManager;
-import com.hatsukaze.overreaction.network.PlayAnimationPacket;
-import com.zigythebird.playeranim.animation.PlayerAnimationController;
-import com.zigythebird.playeranim.api.PlayerAnimationAccess;
-import com.zigythebird.playeranimcore.animation.layered.modifier.SpeedModifier;
+import com.hatsukaze.overreaction.manager.ClientPoseController;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public class AnimationPacketHandler {
@@ -35,26 +28,20 @@ public class AnimationPacketHandler {
     @OnlyIn(Dist.CLIENT)
     private static void handleClient(PlayAnimationPacket packet) {
         // 元のクライアント処理をここに移動
-            Minecraft.getInstance().player.sendSystemMessage(
-                    net.minecraft.network.chat.Component.literal("パケット受信: " + packet.animationName())
-            );
-            Entity entity = Minecraft.getInstance().level.getEntity(packet.entityId());
-            if (!(entity instanceof AbstractClientPlayer player)) return;
-
-            // PALのコントローラー取得
-            PlayerAnimationController controller = (PlayerAnimationController)
-                    //指定したプレイヤーの, 攻撃用のレイヤーIDを取得
-                    PlayerAnimationAccess.getPlayerAnimationLayer(player, ExampleModClient.ATTACK_LAYER_ID);
-            if (controller == null) return;
+        Minecraft.getInstance().player.sendSystemMessage(
+                net.minecraft.network.chat.Component.literal("パケット受信: " + packet.animationName())
+        );
+        Entity entity = Minecraft.getInstance().level.getEntity(packet.entityId());
+        if (!(entity instanceof AbstractClientPlayer player)) return;
 
         float speed = packet.animationNaturalTime() / packet.totalAttackingTime();
 
-        // アニメーション再生、名前空間の設定したアニメーションを起動
-            //Jsonから取得するから、アニメーション名とあってないといけない
-        controller.removeModifierIf(m -> m instanceof SpeedModifier);
-        controller.addModifier(new SpeedModifier(speed), 0);
-        controller.triggerAnimation(
-                    ResourceLocation.fromNamespaceAndPath("overreaction", packet.animationName())
+        // 保持付き再生＋前のポーズからのフェードはClientPoseControllerに任せる
+        ClientPoseController.play(
+                player,
+                ResourceLocation.fromNamespaceAndPath("overreaction", packet.animationName()),
+                speed,
+                packet.blendInTicks()
         );
     }
 
@@ -68,10 +55,25 @@ public class AnimationPacketHandler {
         Entity entity = Minecraft.getInstance().level.getEntity(packet.entityId());
         if (!(entity instanceof AbstractClientPlayer player)) return;
 
-        PlayerAnimationController controller = (PlayerAnimationController)
-                PlayerAnimationAccess.getPlayerAnimationLayer(player, ExampleModClient.ATTACK_LAYER_ID);
-        if (controller == null) return;
+        ClientHitStopManager.start(player, packet.duration());
+    }
 
-        ClientHitStopManager.start(controller, packet.duration());
+    public static void handleReleasePose(ReleasePosePacket packet, IPayloadContext context) {
+        //TIPS: context.emqueueWork ゲームのデータ操作系は必ずメインスレッドで行う必要がある　処理予約をする　重い処理は注意？
+        //neoforgeなら一応デフォでメインスレッドで出てるけど、明示的宣言をするのは　まる！
+        context.enqueueWork(() -> {
+            if (context.flow() == PacketFlow.CLIENTBOUND) {
+                handleReleasePoseClient(packet);
+            }
+        });
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    private static void handleReleasePoseClient(ReleasePosePacket packet) {
+        Entity entity = Minecraft.getInstance().level.getEntity(packet.entityId());
+        // エンティティがプレイヤーではないときreturn
+        if (!(entity instanceof AbstractClientPlayer player)) return;
+
+        ClientPoseController.release(player, packet.fadeTicks());
     }
 }

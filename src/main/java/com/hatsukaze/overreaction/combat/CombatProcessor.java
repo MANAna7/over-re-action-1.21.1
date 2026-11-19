@@ -23,16 +23,15 @@ public class CombatProcessor {
         CombatStateAttachment.CombatPhase phase = state.getPhase();
 
         // ATTACKING中は新しい攻撃を受け付けない
-        // ATTACKING中は先行入力としてバッファ
-        if (phase == CombatStateAttachment.CombatPhase.ATTACKING) {
-            state.setBufferedInput(true);
-            return;
-        }
+        // ATTACKING/RECOVERY/HIT_STOP 中は先行入力としてバッファ
         // RECOVERY中はcancelable判定はTickHandlerに任せる
-        if (phase == CombatStateAttachment.CombatPhase.RECOVERY) {
+        if (phase == CombatStateAttachment.CombatPhase.ATTACKING
+                || phase == CombatStateAttachment.CombatPhase.HIT_STOP
+                || phase == CombatStateAttachment.CombatPhase.RECOVERY) {
             state.setBufferedInput(true);
             return;
         }
+
 
         ComboDefinition combo = ComboRegistry.get("one_handed_sword_basic");
 //        System.out.println("combo: " + combo); //DEBUG:
@@ -65,7 +64,7 @@ public class CombatProcessor {
         // attackingTime = attackingTimeBase × (1.0 / ATTACK_SPEED)
         // ex: Sword (ATTACK_SPEED=4.0)、attackingTimeBase=1.0 → 0.25s
         //     GreatSword (ATTACK_SPEED=1.0)、attackingTimeBase=1.0 → 1.0s
-        float totalAttackingTime = (float)(attackDef.attackingTimeBase / atkSpeed);
+        float totalAttackingTime = (float) (attackDef.attackingTimeBase / atkSpeed);
         state.setTotalAttackingTime(totalAttackingTime);
 
         state.setCurrentNodeId(attackDef.id);
@@ -79,7 +78,7 @@ public class CombatProcessor {
 
         //Hit時に発動する特別なモーションではないときtrue
         if (!attackDef.playOnHit) {
-            PlayAnimationPacket packet = new PlayAnimationPacket(player.getId(), attackDef.animationId, totalAttackingTime, attackDef.animationNaturalTime);
+            PlayAnimationPacket packet = new PlayAnimationPacket(player.getId(), attackDef.animationId, totalAttackingTime, attackDef.animationNaturalTime, attackDef.blendInTime);
             PacketDistributor.sendToPlayer(player, packet);
         }
     }
