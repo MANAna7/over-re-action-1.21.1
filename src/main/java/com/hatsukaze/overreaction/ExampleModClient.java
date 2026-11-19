@@ -1,6 +1,7 @@
 package com.hatsukaze.overreaction;
 
 import com.hatsukaze.overreaction.manager.ClientHitStopManager;
+import com.hatsukaze.overreaction.manager.FirstPersonAttackController;
 import com.hatsukaze.overreaction.network.RequestAttackPacket;
 import com.zigythebird.playeranim.animation.PlayerAnimationController;
 import com.zigythebird.playeranim.api.PlayerAnimationFactory;
@@ -35,6 +36,9 @@ public class ExampleModClient {
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
     }
 
+    // 1回のクリックで攻撃を送るのは1回だけ（ブロックを殴ると発火が重なるため）
+    private static boolean attackSentThisPress = false;
+
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
         // Some client setup code
@@ -43,6 +47,7 @@ public class ExampleModClient {
 
         // PALのアニメーションレイヤー登録、プレイヤーが生成されるたびにレイヤーを自動でセット ファクトリ関数、プレイヤー用のコントローラーを作成
         event.enqueueWork(() -> {
+            // 3人称
             PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(
                     ATTACK_LAYER_ID,
                     1500,
@@ -50,21 +55,39 @@ public class ExampleModClient {
                         PlayerAnimationController controller = new PlayerAnimationController(player,
                                 (c, state, animSetter) -> PlayState.STOP
                         );
-                        // 一人称設定を追加
-                        controller.setFirstPersonMode(FirstPersonMode.THIRD_PERSON_MODEL);
-                        controller.setFirstPersonConfiguration(
-                                new FirstPersonConfiguration(
-                                        true,  // showRightArm
-                                        true,  // showLeftArm
-                                        true,  // showRightItem
-                                        true,  // showLeftItem
-                                        false  // showArmor
-                                )
+                        applyFirstPersonSettings(controller);
+                        return controller;
+                    }
+            );
+            //一人称
+            PlayerAnimationFactory.ANIMATION_DATA_FACTORY.registerFactory(
+                    FIRST_PERSON_LAYER_ID,
+                    1600,
+                    player -> {
+                        FirstPersonAttackController controller = new FirstPersonAttackController(player,
+                                (c, state, animSetter) -> PlayState.STOP
                         );
+                        applyFirstPersonSettings(controller);
                         return controller;
                     }
             );
         });
+    }
+
+    /**
+     * 一人称での描画設定。レイヤー共通
+     */
+    private static void applyFirstPersonSettings(PlayerAnimationController controller) {
+        controller.setFirstPersonMode(FirstPersonMode.THIRD_PERSON_MODEL);
+        controller.setFirstPersonConfiguration(
+                new FirstPersonConfiguration(
+                        true,  // showRightArm
+                        true,  // showLeftArm
+                        true,  // showRightItem
+                        true,  // showLeftItem
+                        false  // showArmor
+                )
+        );
     }
 
     //左クリック受け取り、フィルタリングして通す
@@ -78,6 +101,10 @@ public class ExampleModClient {
         ItemStack weapon = mc.player.getMainHandItem();
         if (!(weapon.getItem() instanceof SwordItem)) return;
 
+        // クリックしたか確認
+        if (attackSentThisPress) return;
+        attackSentThisPress = true;
+
         System.out.println("パケット送信"); // ← 追加
         PacketDistributor.sendToServer(new RequestAttackPacket());
     }
@@ -85,12 +112,22 @@ public class ExampleModClient {
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
         ClientHitStopManager.tick();
+
+        // ボタン話したときにfalse
+        Minecraft mc = Minecraft.getInstance();
+        if (!mc.options.keyAttack.isDown()) {
+            attackSentThisPress = false;
+        }
     }
 
 
     //レイヤーを登録
     public static final ResourceLocation ATTACK_LAYER_ID =
             ResourceLocation.fromNamespaceAndPath("overreaction", "attack_layer");
+
+    // 一人称専用レイヤー
+    public static final ResourceLocation FIRST_PERSON_LAYER_ID =
+            ResourceLocation.fromNamespaceAndPath("overreaction", "first_person_layer");
 
 }
 
