@@ -23,7 +23,8 @@
       "releaseTime": 0.21,
       "blendInTime": 0.21,
       "leftClickNext": "slash_2",
-      "rightClickNext": "guard"
+      "rightClickNext": "guard",
+      "firstPersonAnimationId": "sword_slash_fp_1"
     },
     {
       "id": "slash_2",

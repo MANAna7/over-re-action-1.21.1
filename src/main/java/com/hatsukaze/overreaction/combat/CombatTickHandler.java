@@ -192,7 +192,8 @@ public class CombatTickHandler {
                     attackDef.animationId,
                     state.getTotalAttackingTime(),
                     attackDef.animationNaturalTime,
-                    attackDef.blendInTime
+                    attackDef.blendInTime,
+                    attackDef.firstPersonAnimationId
 
             );
             PacketDistributor.sendToPlayersTrackingEntityAndSelf(player, packet);

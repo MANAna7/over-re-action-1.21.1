@@ -61,6 +61,7 @@ public class CombatProcessor {
 
         // attackingTime を計算して state に保存
         double atkSpeed = player.getAttributeValue(Attributes.ATTACK_SPEED);
+        
         // attackingTime = attackingTimeBase × (1.0 / ATTACK_SPEED)
         // ex: Sword (ATTACK_SPEED=4.0)、attackingTimeBase=1.0 → 0.25s
         //     GreatSword (ATTACK_SPEED=1.0)、attackingTimeBase=1.0 → 1.0s
@@ -78,7 +79,8 @@ public class CombatProcessor {
 
         //Hit時に発動する特別なモーションではないときtrue
         if (!attackDef.playOnHit) {
-            PlayAnimationPacket packet = new PlayAnimationPacket(player.getId(), attackDef.animationId, totalAttackingTime, attackDef.animationNaturalTime, attackDef.blendInTime);
+            PlayAnimationPacket packet = new PlayAnimationPacket(player.getId(), attackDef.animationId,
+                    totalAttackingTime, attackDef.animationNaturalTime, attackDef.blendInTime, attackDef.firstPersonAnimationId);
             PacketDistributor.sendToPlayer(player, packet);
         }
     }

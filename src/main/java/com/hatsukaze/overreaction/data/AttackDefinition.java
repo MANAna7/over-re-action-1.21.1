@@ -36,11 +36,15 @@ public class AttackDefinition {
      */
     public final int releaseTime;   // この攻撃でコンボが終わったときのフェード
 
+    // 一人称系
+    public final String firstPersonAnimationId;
+    public static final String NO_FP_ANIMATION = "";
+
 
     private AttackDefinition(String id, String animationId, float damageMultiplier,
                              float hitWindowStart, float hitWindowEnd, boolean playOnHit, float attackingTimeBase, float animationNaturalTime,
                              HitStopDefinition hitStop, RecoveryDefinition recovery,
-                             ChargeDefinition charge, int blendInTime, int releaseTime) {
+                             ChargeDefinition charge, int blendInTime, int releaseTime, String firstPersonAnimationId) {
         this.id = id;
         this.animationId = animationId;
         this.damageMultiplier = damageMultiplier;
@@ -54,6 +58,7 @@ public class AttackDefinition {
         this.charge = charge;
         this.blendInTime = blendInTime;
         this.releaseTime = releaseTime;
+        this.firstPersonAnimationId = firstPersonAnimationId;
     }
 
     /**
@@ -88,16 +93,36 @@ public class AttackDefinition {
         int blendInTime = secondsToTicks(readFloatFromJson(json, "blendInTime", DEFAULT_BLEND_IN_TIME));
         int releaseTime = secondsToTicks(readFloatFromJson(json, "releaseTime", DEFAULT_RELEASE_TIME));
 
+        String firstPersonAnimationId = readStringFromJson(json, "firstPersonAnimationId", NO_FP_ANIMATION);
+
         return new AttackDefinition(id, animationId, dmgMult, hwStart, hwEnd,
-                playOnHit, atkTimeBase, animationNaturalTime, hitStop, recovery, charge, blendInTime, releaseTime);
+                playOnHit, atkTimeBase, animationNaturalTime, hitStop, recovery, charge, blendInTime, releaseTime, firstPersonAnimationId);
     }
 
     /**
      * jsonからfloatを取得する
-     * - キーがない　またはnull -> return default
+     *
+     * @param json         JsonObject
+     * @param key          String
+     * @param defaultValue float
+     * @return -> return Read float
+     * @return　キーがない　またはnull -> return default
      */
     public static float readFloatFromJson(JsonObject json, String key, float defaultValue) {
         return (json.has(key) && !json.get(key).isJsonNull()) ? json.get(key).getAsFloat() : defaultValue;
+    }
+
+    /**
+     * jsonからStringを取得する
+     *
+     * @param json         JsonObject
+     * @param key          String
+     * @param defaultValue String NO_FP_ANIMATION
+     * @return -> return Read String
+     * @return　キーがない　またはnull -> return default
+     */
+    public static String readStringFromJson(JsonObject json, String key, String defaultValue) {
+        return (json.has(key) && !json.get(key).isJsonNull()) ? json.get(key).getAsString() : defaultValue;
     }
 
     public static int secondsToTicks(float seconds) {

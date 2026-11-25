@@ -36,10 +36,16 @@ public class AnimationPacketHandler {
 
         float speed = packet.animationNaturalTime() / packet.totalAttackingTime();
 
+        String fpName = packet.fpAnimationName();
+        // コーデック通るとnullじゃなくなる（空になる）
+        ResourceLocation fpAnimId = fpName.isEmpty()
+                ? null : ResourceLocation.fromNamespaceAndPath("overreaction", fpName);
+
         // 保持付き再生＋前のポーズからのフェードはClientPoseControllerに任せる
         ClientPoseController.play(
                 player,
                 ResourceLocation.fromNamespaceAndPath("overreaction", packet.animationName()),
+                fpAnimId, // 一人称アニメ
                 speed,
                 packet.blendInTicks()
         );

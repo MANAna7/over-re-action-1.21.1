@@ -1,0 +1,39 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"sword_slash_fp_1": {
+			"animation_length": 0.5,
+			"bones": {
+				"right_arm": {
+					"rotation": {
+						"0.0": {
+							"vector": [-68.299, 19.3546, -57.9978]
+						},
+						"0.2083": {
+							"vector": [-51.0247, -3.7387, -77.4687]
+						},
+						"0.375": {
+							"vector": [-8.5247, -3.7387, -77.4687]
+						}
+					},
+					"position": {
+						"vector": [0, 0, -2]
+					}
+				},
+				"right_item": {
+					"rotation": {
+						"0.0": {
+							"vector": [0, 0, 0]
+						},
+						"0.2083": {
+							"vector": [67.5, 0, 0]
+						},
+						"0.375": {
+							"vector": [112.5, 0, 0]
+						}
+					}
+				}
+			}
+		}
+	}
+}

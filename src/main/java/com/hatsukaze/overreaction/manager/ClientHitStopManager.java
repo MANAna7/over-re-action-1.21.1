@@ -1,8 +1,5 @@
 package com.hatsukaze.overreaction.manager;
 
-import com.hatsukaze.overreaction.ExampleModClient;
-import com.zigythebird.playeranim.animation.PlayerAnimationController;
-import com.zigythebird.playeranim.api.PlayerAnimationAccess;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.world.entity.Entity;
@@ -25,10 +22,7 @@ public class ClientHitStopManager {
     }
 
     public static void start(AbstractClientPlayer player, float duration) {
-        PlayerAnimationController controller = getController(player);
-        if (controller == null) return;
-
-        controller.pause();
+        ClientPoseController.pause(player);
         REMAINING.put(player.getId(), duration);
     }
 
@@ -56,16 +50,10 @@ public class ClientHitStopManager {
             // 時間切れ発生時特定エンティティの一時停止を解除してアニメーションを破棄
             Entity entity = mc.level.getEntity(entry.getKey());
             if (entity instanceof AbstractClientPlayer player) {
-                PlayerAnimationController controller = getController(player);
-                if (controller != null) controller.unpause();
+                ClientPoseController.unpause(player);
             }
             it.remove();
         }
     }
 
-
-    private static PlayerAnimationController getController(AbstractClientPlayer player) {
-        return (PlayerAnimationController) PlayerAnimationAccess.getPlayerAnimationLayer(
-                player, ExampleModClient.ATTACK_LAYER_ID);
-    }
 }

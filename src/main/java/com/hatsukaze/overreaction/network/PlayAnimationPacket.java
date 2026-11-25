@@ -7,7 +7,7 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 
 public record PlayAnimationPacket(int entityId, String animationName, float totalAttackingTime,
-                                  float animationNaturalTime, int blendInTicks)
+                                  float animationNaturalTime, int blendInTicks, String fpAnimationName)
         implements CustomPacketPayload {
 
     //PlayAnimationPacketのタイプ（種類？）を名前空間とそのパスで作成、ネットワーク上でどのパケットか識別するために使用
@@ -28,6 +28,8 @@ public record PlayAnimationPacket(int entityId, String animationName, float tota
                     ByteBufCodecs.FLOAT, PlayAnimationPacket::animationNaturalTime,
                     //　設定ティック数
                     ByteBufCodecs.INT, PlayAnimationPacket::blendInTicks,
+                    // 一人称アニメーションの名前
+                    ByteBufCodecs.STRING_UTF8, PlayAnimationPacket::fpAnimationName,
                     PlayAnimationPacket::new
             );
 
